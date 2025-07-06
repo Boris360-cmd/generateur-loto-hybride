@@ -1,3 +1,4 @@
+
 import streamlit as st
 import pandas as pd
 import random
@@ -5,28 +6,10 @@ from numpy.random import choice
 from collections import defaultdict
 from datetime import datetime
 import os
-import glob
 
-@st.cache_data
 def charger_tirages_realistes():
-    csv_files = glob.glob("data/*.csv")
-    dataframes = []
-    for file in csv_files:
-        try:
-            df = pd.read_csv(file, sep=';', encoding='utf-8')
-            dataframes.append(df)
-        except:
-            pass
-    if not dataframes:
-        return []
-    df_all = pd.concat(dataframes, ignore_index=True)
-    if "1er_ou_2eme_tirage" in df_all.columns:
-        df_filtered = df_all[(df_all["1er_ou_2eme_tirage"].isna()) | (df_all["1er_ou_2eme_tirage"] != "2")]
-    else:
-        df_filtered = df_all.copy()
-    colonnes_boules = ['boule_1', 'boule_2', 'boule_3', 'boule_4', 'boule_5']
-    df_filtered = df_filtered[colonnes_boules].dropna().astype(int)
-    return [list(row) for row in df_filtered.itertuples(index=False, name=None)]
+    df_all = pd.read_csv("data/tirages_sans_numero_chance.csv", sep=';', encoding='utf-8')
+    return [list(row) for row in df_all.itertuples(index=False, name=None)]
 
 def creer_frequences(historique):
     plages = {
@@ -71,20 +54,14 @@ st.markdown("Appuyez sur le bouton ci-dessous pour générer 4 grilles pondéré
 
 if st.button("🎰 Générer 4 grilles"):
     historique = charger_tirages_realistes()
-    if not historique:
-        st.error("Aucun fichier de tirages valide trouvé dans le dossier 'data/'.")
-    else:
-        plages = creer_frequences(historique)
-        grilles = [generer_grille(plages) for _ in range(4)]
-        df_resultats = pd.DataFrame({
-            "Grille #": [f"Grille {i+1}" for i in range(4)],
-            "Numéros": grilles
-        })
-        now = datetime.now().strftime("%Y-%m-%d")
-        os.makedirs("grilles", exist_ok=True)
-        df_resultats.to_csv(f"grilles/grilles_{now}.csv", index=False)
-        st.dataframe(df_resultats, use_container_width=True)
-        st.success("✅ Grilles générées et archivées.")
-
-st.caption("Version Streamlit – mise à jour automatique chaque dimanche.")
-# Interface Streamlit – contenu à coller depuis l'éditeur
+    plages = creer_frequences(historique)
+    grilles = [generer_grille(plages) for _ in range(4)]
+    df_resultats = pd.DataFrame({
+        "Grille #": [f"Grille {i+1}" for i in range(4)],
+        "Numéros": grilles
+    })
+    now = datetime.now().strftime("%Y-%m-%d")
+    os.makedirs("grilles", exist_ok=True)
+    df_resultats.to_csv(f"grilles/grilles_{now}.csv", index=False)
+    st.dataframe(df_resultats, use_container_width=True)
+    st.success("✅ Grilles générées et archivées.")
