@@ -1,30 +1,14 @@
+
 import pandas as pd
 import random
 from numpy.random import choice
 from collections import defaultdict
 from datetime import datetime
 import os
-import glob
 
 def charger_tirages_realistes():
-    csv_files = glob.glob("data/*.csv")
-    dataframes = []
-    for file in csv_files:
-        try:
-            df = pd.read_csv(file, sep=';', encoding='utf-8')
-            dataframes.append(df)
-        except:
-            pass
-    if not dataframes:
-        return []
-    df_all = pd.concat(dataframes, ignore_index=True)
-    if "1er_ou_2eme_tirage" in df_all.columns:
-        df_filtered = df_all[(df_all["1er_ou_2eme_tirage"].isna()) | (df_all["1er_ou_2eme_tirage"] != "2")]
-    else:
-        df_filtered = df_all.copy()
-    colonnes_boules = ['boule_1', 'boule_2', 'boule_3', 'boule_4', 'boule_5']
-    df_filtered = df_filtered[colonnes_boules].dropna().astype(int)
-    return [list(row) for row in df_filtered.itertuples(index=False, name=None)]
+    df_all = pd.read_csv("data/tirages_sans_numero_chance.csv", sep=';', encoding='utf-8')
+    return [list(row) for row in df_all.itertuples(index=False, name=None)]
 
 def creer_frequences(historique):
     plages = {
@@ -64,20 +48,18 @@ def generer_grille(df_par_plage):
 
 def main():
     historique = charger_tirages_realistes()
-    if not historique:
-        print("Erreur : aucun fichier de tirages valide.")
-        return
     plages = creer_frequences(historique)
     grilles = [generer_grille(plages) for _ in range(4)]
+
     df_resultats = pd.DataFrame({
         "Grille #": [f"Grille {i+1}" for i in range(4)],
         "Numéros": grilles
     })
+
     now = datetime.now().strftime("%Y-%m-%d")
     os.makedirs("grilles", exist_ok=True)
     df_resultats.to_csv(f"grilles/grilles_{now}.csv", index=False)
-    print(f"✅ Grilles générées dans grilles/grilles_{now}.csv")
+    print("✅ Grilles générées automatiquement et archivées.")
 
 if __name__ == "__main__":
     main()
-# Script auto – contenu à coller depuis l'éditeur
