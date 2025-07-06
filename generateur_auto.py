@@ -1,0 +1,1 @@
+# Script auto – contenu à coller depuis l'éditeur
